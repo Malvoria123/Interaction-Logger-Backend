@@ -34,7 +34,7 @@ const limiter = rateLimit({
 app.use(limiter);
 
 
-app.post("/", async (req, res) => {
+app.post("/api", async (req, res) => {
   const clientApiKey = req.headers['x-api-key'];
   if (clientApiKey !== process.env.API_KEY) {
     return res.status(403).send("Forbidden: Invalid API Key");
