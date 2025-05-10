@@ -3,7 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const admin = require("firebase-admin");
-
+const serverless = require('serverless-http');
 
 if (!admin.apps.length) {
   const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
@@ -59,5 +59,4 @@ app.post("/api", async (req, res) => {
   }
 });
 
-
-module.exports = app;
+module.exports = serverless(app);
