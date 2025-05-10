@@ -1,5 +1,12 @@
 require('dotenv').config();
 
+const rateLimit = require('express-rate-limit');
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: "Too many requests from this IP. Please try again later.",
+});
+
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
@@ -23,7 +30,7 @@ admin.initializeApp({
 const db = admin.firestore();
 
 // POST endpoint to receive interaction logs
-app.post("/log", async (req, res) => {
+app.post("/log", limiter, async (req, res) => {
   const clientApiKey = req.headers['x-api-key'];
   if (clientApiKey !== process.env.API_KEY) {
     return res.status(403).send("Forbidden: Invalid API Key");
@@ -48,5 +55,6 @@ app.post("/log", async (req, res) => {
     res.status(500).send("Server error.");
   }
 });
+
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
