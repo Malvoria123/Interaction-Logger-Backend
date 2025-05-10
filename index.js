@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
@@ -22,6 +24,11 @@ const db = admin.firestore();
 
 // POST endpoint to receive interaction logs
 app.post("/log", async (req, res) => {
+  const clientApiKey = req.headers['x-api-key'];
+  if (clientApiKey !== process.env.API_KEY) {
+    return res.status(403).send("Forbidden: Invalid API Key");
+  }
+
   try {
     const { type, data } = req.body;
 
