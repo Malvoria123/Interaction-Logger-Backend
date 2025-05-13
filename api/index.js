@@ -31,13 +31,21 @@ app.use((req, res, next) => {
 
 app.use(bodyParser.json());
 
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 50,
-  message: "Too many requests from this IP. Please try again later.",
+const RedisStore = require('rate-limit-redis');
+const redis = require('redis');
+
+const redisClient = redis.createClient({
+  url: process.env.REDIS_URL,
 });
 
-app.use(limiter);
+const limiter = rateLimit({
+  store: new RedisStore({
+    client: redisClient,
+  }),
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: "Too many requests from this IP. Please try again later.",
+});
 
 
 app.post("/api", async (req, res) => {
@@ -63,6 +71,10 @@ app.post("/api", async (req, res) => {
     console.error("Logging failed:", err);
     res.status(500).send("Server error.");
   }
+});
+
+app.get("/api", (req, res) => {
+  res.send("This is the API endpoint. Use POST to log data.");
 });
 
 module.exports = app;
