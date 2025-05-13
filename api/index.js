@@ -33,7 +33,7 @@ app.use(bodyParser.json());
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 50,
+  max: 5,
   message: "Too many requests from this IP. Please try again later.",
 });
 
