@@ -2,7 +2,7 @@
   "name": "interaction-logger-backend",
   "version": "1.0.0",
   "description": "Backend for logging user interactions to Firestore",
-  "main": "index.js",
+  "main": "api/index.js",
   "scripts": {
     "start": "node index.js"
   },
