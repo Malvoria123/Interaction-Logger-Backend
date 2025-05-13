@@ -31,21 +31,13 @@ app.use((req, res, next) => {
 
 app.use(bodyParser.json());
 
-const RedisStore = require('rate-limit-redis');
-const redis = require('redis');
-
-const redisClient = redis.createClient({
-  url: process.env.REDIS_URL,
-});
-
 const limiter = rateLimit({
-  store: new RedisStore({
-    client: redisClient,
-  }),
   windowMs: 15 * 60 * 1000,
-  max: 5,
+  max: 50,
   message: "Too many requests from this IP. Please try again later.",
 });
+
+app.use(limiter);
 
 
 app.post("/api", async (req, res) => {
