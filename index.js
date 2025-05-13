@@ -19,9 +19,16 @@ const db = admin.firestore();
 const app = express();
 
 
-app.use(cors({
-  origin: "https://malvoria123.github.io",
-}));
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "https://malvoria123.github.io");
+  res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, x-api-key");
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 
 app.use(bodyParser.json());
 
