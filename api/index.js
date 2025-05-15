@@ -4,6 +4,31 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const admin = require("firebase-admin");
 
+// redis
+const redis = require('redis');
+const redisClient = redis.createClient({
+  url: process.env.REDIS_URL,
+});
+
+redisClient.on('error', (err) => {
+  console.error('Redis Client Error:', err);
+});
+
+(async () => {
+  await redisClient.connect();
+})();
+
+const RedisStore = require('rate-limit-redis');
+
+const limiter = rateLimit({
+  store: new RedisStore({
+    client: redisClient,
+  }),
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: "Too many requests from this IP. Please try again later.",
+});
+
 if (!admin.apps.length) {
   const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 
@@ -35,12 +60,7 @@ app.use((req, res, next) => {
 
 app.use(bodyParser.json());
 
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 0,
-  message: "Too many requests from this IP. Please try again later.",
-});
-
+// use limiter
 app.use(limiter);
 
 
