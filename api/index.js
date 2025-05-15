@@ -17,6 +17,10 @@ const db = admin.firestore();
 
 const app = express();
 
+app.use((req, res, next) => {
+  return res.status(503).send("Server is under maintenance. Please try again later.");
+});
+
 
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "https://malvoria123.github.io");
