@@ -27,9 +27,9 @@ const db = admin.firestore();
 const app = express();
 
 // Maintenance
-// app.use((req, res, next) => {
-//   return res.status(503).send("Server is under maintenance. Please try again later.");
-// });
+app.use((req, res, next) => {
+  return res.status(503).send("Server is under maintenance. Please try again later.");
+});
 
 // const corsOptions = {
 //   origin: "https://malvoria123.github.io ",
