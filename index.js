@@ -1,11 +1,9 @@
 // Import required packages
-const rateLimit = require("express-rate-limit");
-const { RateLimitRedis } = require("rate-limit-redis");
-const redis = require("redis");
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const admin = require("firebase-admin");
+const rateLimit = require("express-rate-limit");
 
 // Initialize Firebase Admin SDK (only once)
 if (!admin.apps.length) {
@@ -26,28 +24,24 @@ const db = admin.firestore();
 // Express app setup
 const app = express();
 
-Maintenance
-app.use((req, res, next) => {
-  return res.status(503).send("Server is under maintenance. Please try again later.");
-});
+// === OPTIONAL MAINTENANCE MODE ===
+// Comment out when not needed
+// app.use((req, res, next) => {
+//   return res.status(503).send("Server is under maintenance. Please try again later.");
+// });
 
-// const corsOptions = {
-//   origin: "https://malvoria123.github.io ",
-//   methods: ["GET", "POST", "OPTIONS"],
-//   allowedHeaders: ["Content-Type", "x-api-key"],
-// };
-
+// CORS headers
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "https://malvoria123.github.io");
   res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.header("Access-Control-Allow-Headers", "Content-Type, x-api-key");
   if (req.method === "OPTIONS") {
-    return res.status(200).end(); // important: use `.end()` not `.sendStatus()` for Vercel
+    return res.status(200).end(); // Don't use sendStatus on Vercel/Railway
   }
   next();
 });
 
-// Handle preflight OPTIONS requests manually (optional but explicit)
+// Handle preflight OPTIONS requests
 app.options("/api", (req, res) => {
   res.sendStatus(200);
 });
@@ -55,42 +49,21 @@ app.options("/api", (req, res) => {
 // Body parser middleware
 app.use(bodyParser.json());
 
-// Redis client setup
-const redisClient = redis.createClient({ url: process.env.REDIS_URL });
-
-redisClient.on("error", (err) => {
-  console.error("Redis Client Error:", err);
+// === In-Memory Rate Limiter ===
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // limit each IP to 5 requests per windowMs
+  message: {
+    status: 429,
+    message: "Too many requests from this IP. Please try again later.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
-// Rate limiter using Redis
-let limiter;
+app.use(limiter);
 
-(async () => {
-  try {
-    await redisClient.connect();
-    console.log("Connected to Redis successfully.");
-
-    limiter = rateLimit({
-      store: RateLimitRedis({
-        sendCommand: (...args) => redisClient.sendCommand(args),
-      }),
-      windowMs: 15 * 60 * 1000,
-      max: 5,
-      message: {
-        status: 429,
-        message: "Too many requests from this IP. Please try again later.",
-      },
-      standardHeaders: true,
-      legacyHeaders: false,
-    });
-
-    app.use(limiter); // ✅ Move this inside async after setup
-  } catch (error) {
-    console.error("Failed to initialize rate limiter:", error);
-  }
-})();
-
-// API endpoint for logging interaction data
+// === API POST Endpoint ===
 app.post("/api", async (req, res) => {
   const clientApiKey = req.headers["x-api-key"];
 
@@ -118,7 +91,7 @@ app.post("/api", async (req, res) => {
   }
 });
 
-// Simple GET route for testing
+// === Simple GET Endpoint ===
 app.get("/api", (req, res) => {
   res.status(200).json({
     status: 200,
@@ -126,5 +99,5 @@ app.get("/api", (req, res) => {
   });
 });
 
-// Export app for Vercel or serverless deployment
+// Export app for Railway
 module.exports = app;
