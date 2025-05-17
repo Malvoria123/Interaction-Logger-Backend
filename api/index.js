@@ -4,32 +4,7 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const admin = require("firebase-admin");
 
-// redis
-const { createClient } = require("redis");
-const { RateLimiterRedis } = require("rate-limit-redis");
 
-const redisClient = createClient({
-  url: process.env.REDIS_URL,
-});
-
-redisClient.on("error", (err) => {
-  console.error("Redis Client Error:", err);
-});
-
-(async () => {
-  await redisClient.connect();
-
-  const limiter = rateLimit({
-    store: new RateLimiterRedis({
-      sendCommand: (...args) => redisClient.sendCommand(args),
-    }),
-    windowMs: 15 * 60 * 1000,
-    max: 5,
-    message: "Too many requests from this IP. Please try again later.",
-  });
-
-  app.use(limiter);
-})();
 
 
 if (!admin.apps.length) {
@@ -66,8 +41,32 @@ app.options('/api', (req, res) => {
 
 app.use(bodyParser.json());
 
-// use limiter
-app.use(limiter);
+// redis
+const { createClient } = require("redis");
+const { RateLimiterRedis } = require("rate-limit-redis");
+
+const redisClient = createClient({
+  url: process.env.REDIS_URL,
+});
+
+redisClient.on("error", (err) => {
+  console.error("Redis Client Error:", err);
+});
+
+(async () => {
+  await redisClient.connect();
+
+  const limiter = rateLimit({
+    store: new RateLimiterRedis({
+      sendCommand: (...args) => redisClient.sendCommand(args),
+    }),
+    windowMs: 15 * 60 * 1000,
+    max: 5,
+    message: "Too many requests from this IP. Please try again later.",
+  });
+
+  app.use(limiter);
+})();
 
 
 app.post("/api", async (req, res) => {
