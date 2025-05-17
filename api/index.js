@@ -1,6 +1,6 @@
 // Import required packages
 const rateLimit = require("express-rate-limit");
-const { RateLimiterRedis } = require("rate-limit-redis");
+const RedisStore = require("rate-limit-redis");
 const redis = require("redis");
 const express = require("express");
 const cors = require("cors");
@@ -26,10 +26,10 @@ const db = admin.firestore();
 // Express app setup
 const app = express();
 
-Maintenance
-app.use((req, res, next) => {
-  return res.status(503).send("Server is under maintenance. Please try again later.");
-});
+// Maintenance
+// app.use((req, res, next) => {
+//   return res.status(503).send("Server is under maintenance. Please try again later.");
+// });
 
 // const corsOptions = {
 //   origin: "https://malvoria123.github.io ",
@@ -68,25 +68,26 @@ redisClient.on("error", (err) => {
 let limiter;
 
 (async () => {
-  await redisClient.connect().catch((err) => {
-    console.error("Failed to connect to Redis:", err);
-  });
+  try {
+    await redisClient.connect();
+    console.log("Connected to Redis successfully.");
 
-  limiter = rateLimit({
-    store: new RateLimiterRedis({
-      client: redisClient,
-    }),
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // Limit each IP to 5 requests per windowMs
-    message: {
-      status: 429,
-      message: "Too many requests from this IP. Please try again later.",
-    },
-    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-  });
+    limiter = rateLimit({
+      store: new RedisStore({ client: redisClient }),
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 5, // Limit each IP to 5 requests per window
+      message: {
+        status: 429,
+        message: "Too many requests from this IP. Please try again later.",
+      },
+      standardHeaders: true, // Enable modern RateLimit-* headers
+      legacyHeaders: false, // Disable deprecated X-RateLimit-* headers
+    });
 
-  app.use(limiter);
+    app.use(limiter);
+  } catch (error) {
+    console.error("Failed to initialize rate limiter:", error);
+  }
 })();
 
 // API endpoint for logging interaction data
