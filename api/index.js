@@ -1,51 +1,50 @@
-const rateLimit = require('express-rate-limit');
+// Import required packages
+const rateLimit = require("express-rate-limit");
+const { RateLimiterRedis } = require("rate-limit-redis");
+const redis = require("redis");
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const admin = require("firebase-admin");
 
-
-
-
+// Initialize Firebase Admin SDK (only once)
 if (!admin.apps.length) {
-  const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-  });
+  try {
+    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+    });
+  } catch (error) {
+    console.error("Firebase initialization failed:", error);
+    process.exit(1); // Exit if Firebase setup fails
+  }
 }
 
+// Firestore instance
 const db = admin.firestore();
 
-
+// Express app setup
 const app = express();
 
-// app.use((req, res, next) => {
-//   return res.status(503).send("Server is under maintenance. Please try again later.");
-// });
-
+// CORS Options
 const corsOptions = {
-  origin: "https://malvoria123.github.io",
+  origin: "https://malvoria123.github.io ",
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type", "x-api-key"],
 };
 
 app.use(cors(corsOptions));
 
-app.options('/api', (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', 'https://malvoria123.github.io');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-api-key');
+// Handle preflight OPTIONS requests manually (optional but explicit)
+app.options("/api", (req, res) => {
   res.sendStatus(200);
 });
 
+// Body parser middleware
 app.use(bodyParser.json());
 
-// redis
-const { createClient } = require("redis");
-const { RateLimiterRedis } = require("rate-limit-redis");
-
-const redisClient = createClient({
+// Redis client setup
+const redisClient = redis.createClient({
   url: process.env.REDIS_URL,
 });
 
@@ -53,49 +52,66 @@ redisClient.on("error", (err) => {
   console.error("Redis Client Error:", err);
 });
 
-(async () => {
-  await redisClient.connect();
+// Rate limiter using Redis
+let limiter;
 
-  const limiter = rateLimit({
+(async () => {
+  await redisClient.connect().catch((err) => {
+    console.error("Failed to connect to Redis:", err);
+  });
+
+  limiter = rateLimit({
     store: new RateLimiterRedis({
-      sendCommand: (...args) => redisClient.sendCommand(args),
+      client: redisClient,
     }),
-    windowMs: 15 * 60 * 1000,
-    max: 5,
-    message: "Too many requests from this IP. Please try again later.",
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 5, // Limit each IP to 5 requests per windowMs
+    message: {
+      status: 429,
+      message: "Too many requests from this IP. Please try again later.",
+    },
+    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
   });
 
   app.use(limiter);
 })();
 
-
+// API endpoint for logging interaction data
 app.post("/api", async (req, res) => {
-  const clientApiKey = req.headers['x-api-key'];
-  if (clientApiKey !== process.env.API_KEY) {
-    return res.status(403).send("Forbidden: Invalid API Key");
+  const clientApiKey = req.headers["x-api-key"];
+
+  if (!clientApiKey || clientApiKey !== process.env.API_KEY) {
+    return res.status(403).json({ status: 403, message: "Forbidden: Invalid API Key" });
+  }
+
+  const { type, data } = req.body;
+
+  if (!type || !data) {
+    return res.status(400).json({ status: 400, message: "Invalid log data." });
   }
 
   try {
-    const { type, data } = req.body;
-
-    if (!type || !data) {
-      return res.status(400).send("Invalid log data.");
-    }
-
     await db.collection("interaction_logs").add({
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
       type,
       ...data,
     });
 
-    res.status(200).send("Logged successfully.");
+    return res.status(200).json({ status: 200, message: "Logged successfully." });
   } catch (err) {
     console.error("Logging failed:", err);
-    res.status(500).send("Server error.");
+    return res.status(500).json({ status: 500, message: "Server error." });
   }
 });
 
+// Simple GET route for testing
 app.get("/api", (req, res) => {
-  res.send("This is the API endpoint. Use POST to log data.");
+  res.status(200).json({
+    status: 200,
+    message: "This is the API endpoint. Use POST to log data.",
+  });
 });
 
+// Export app for Vercel or serverless deployment
 module.exports = app;
