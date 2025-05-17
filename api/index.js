@@ -46,7 +46,6 @@ const app = express();
 //   return res.status(503).send("Server is under maintenance. Please try again later.");
 // });
 
-
 const corsOptions = {
   origin: "https://malvoria123.github.io",
   methods: ["GET", "POST", "OPTIONS"],
@@ -55,7 +54,12 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-
+app.options('/api', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', 'https://malvoria123.github.io');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-api-key');
+  res.sendStatus(200);
+});
 
 app.use(bodyParser.json());
 
