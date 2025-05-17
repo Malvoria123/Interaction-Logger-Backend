@@ -25,16 +25,27 @@ const db = admin.firestore();
 
 // Express app setup
 const app = express();
-app.use((req, res, next) => {
-  return res.status(503).send("Server is under maintenance. Please try again later.");
-});
-const corsOptions = {
-  origin: "https://malvoria123.github.io ",
-  methods: ["GET", "POST", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "x-api-key"],
-};
 
-app.use(cors(corsOptions));
+// Maintenance
+// app.use((req, res, next) => {
+//   return res.status(503).send("Server is under maintenance. Please try again later.");
+// });
+
+// const corsOptions = {
+//   origin: "https://malvoria123.github.io ",
+//   methods: ["GET", "POST", "OPTIONS"],
+//   allowedHeaders: ["Content-Type", "x-api-key"],
+// };
+
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "https://malvoria123.github.io");
+  res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, x-api-key");
+  if (req.method === "OPTIONS") {
+    return res.status(200).end(); // important: use `.end()` not `.sendStatus()` for Vercel
+  }
+  next();
+});
 
 // Handle preflight OPTIONS requests manually (optional but explicit)
 app.options("/api", (req, res) => {
