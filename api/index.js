@@ -9,11 +9,11 @@ const redis = require('redis');
 const redisClient = redis.createClient({
   url: process.env.REDIS_URL,
 });
-
+console.log("cihuai");
 redisClient.on('error', (err) => {
   console.error('Redis Client Error:', err);
 });
-
+console.log("ciaahui");
 (async () => {
   await redisClient.connect();
 })();
