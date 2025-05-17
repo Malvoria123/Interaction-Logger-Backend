@@ -1,25 +1,27 @@
+console.log("csihui");
 const rateLimit = require('express-rate-limit');
 const express = require("express");
 const cors = require("cors");
+console.log("cihuai");
 const bodyParser = require("body-parser");
 const admin = require("firebase-admin");
-
+console.log("cihqui");
 // redis
 const redis = require('redis');
 const redisClient = redis.createClient({
   url: process.env.REDIS_URL,
 });
-console.log("cihuai");
+
 redisClient.on('error', (err) => {
   console.error('Redis Client Error:', err);
 });
-console.log("ciaahui");
+
 (async () => {
   await redisClient.connect();
 })();
-console.log("cihui");
+
 const RedisStore = require('rate-limit-redis');
-console.log("cihua");
+
 const limiter = rateLimit({
   store: new RedisStore({
     client: redisClient,
