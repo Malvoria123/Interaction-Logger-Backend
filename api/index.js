@@ -1,35 +1,36 @@
-console.log("csihui");
 const rateLimit = require('express-rate-limit');
 const express = require("express");
 const cors = require("cors");
-console.log("cihuai");
 const bodyParser = require("body-parser");
 const admin = require("firebase-admin");
-console.log("cihqui");
+
 // redis
-const redis = require('redis');
-const redisClient = redis.createClient({
+const { createClient } = require("redis");
+const { RateLimiterRedis } = require("rate-limit-redis");
+
+const redisClient = createClient({
   url: process.env.REDIS_URL,
 });
 
-redisClient.on('error', (err) => {
-  console.error('Redis Client Error:', err);
+redisClient.on("error", (err) => {
+  console.error("Redis Client Error:", err);
 });
 
 (async () => {
   await redisClient.connect();
+
+  const limiter = rateLimit({
+    store: new RateLimiterRedis({
+      sendCommand: (...args) => redisClient.sendCommand(args),
+    }),
+    windowMs: 15 * 60 * 1000,
+    max: 5,
+    message: "Too many requests from this IP. Please try again later.",
+  });
+
+  app.use(limiter);
 })();
 
-const RedisStore = require('rate-limit-redis');
-
-const limiter = rateLimit({
-  store: new RedisStore({
-    client: redisClient,
-  }),
-  windowMs: 15 * 60 * 1000,
-  max: 5,
-  message: "Too many requests from this IP. Please try again later.",
-});
 
 if (!admin.apps.length) {
   const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
