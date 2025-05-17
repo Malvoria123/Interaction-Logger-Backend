@@ -47,15 +47,14 @@ const app = express();
 // });
 
 
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "https://malvoria123.github.io");
-  res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type, x-api-key");
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(200);
-  }
-  next();
-});
+const corsOptions = {
+  origin: "https://malvoria123.github.io",
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "x-api-key"],
+};
+
+app.use(cors(corsOptions));
+
 
 
 app.use(bodyParser.json());
