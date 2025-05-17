@@ -24,7 +24,7 @@ const db = admin.firestore();
 // Express app setup
 const app = express();
 
-// === OPTIONAL MAINTENANCE MODE ===
+// Maintenance
 // Comment out when not needed
 // app.use((req, res, next) => {
 //   return res.status(503).send("Server is under maintenance. Please try again later.");
@@ -49,7 +49,7 @@ app.options("/api", (req, res) => {
 // Body parser middleware
 app.use(bodyParser.json());
 
-// === In-Memory Rate Limiter ===
+// In-Memory Rate Limiter
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 1, // limit each IP to small requests per windowMs
@@ -63,7 +63,7 @@ const limiter = rateLimit({
 
 app.use(limiter);
 
-// === API POST Endpoint ===
+// API POST Endpoint
 app.post("/api", async (req, res) => {
   const clientApiKey = req.headers["x-api-key"];
 
@@ -91,7 +91,7 @@ app.post("/api", async (req, res) => {
   }
 });
 
-// === Simple GET Endpoint ===
+// Simple GET Endpoint
 app.get("/api", (req, res) => {
   res.status(200).json({
     status: 200,
@@ -102,7 +102,7 @@ app.get("/api", (req, res) => {
 // Export app for Railway
 module.exports = app;
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
