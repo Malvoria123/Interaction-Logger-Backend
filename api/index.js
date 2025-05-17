@@ -17,9 +17,9 @@ redisClient.on('error', (err) => {
 (async () => {
   await redisClient.connect();
 })();
-
+console.log("cihui");
 const RedisStore = require('rate-limit-redis');
-
+console.log("cihua");
 const limiter = rateLimit({
   store: new RedisStore({
     client: redisClient,
