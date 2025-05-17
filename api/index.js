@@ -1,6 +1,6 @@
 // Import required packages
 const rateLimit = require("express-rate-limit");
-const RedisStore = require("rate-limit-redis");
+const { RateLimitRedis } = require("rate-limit-redis");
 const redis = require("redis");
 const express = require("express");
 const cors = require("cors");
@@ -27,9 +27,9 @@ const db = admin.firestore();
 const app = express();
 
 // Maintenance
-app.use((req, res, next) => {
-  return res.status(503).send("Server is under maintenance. Please try again later.");
-});
+// app.use((req, res, next) => {
+//   return res.status(503).send("Server is under maintenance. Please try again later.");
+// });
 
 // const corsOptions = {
 //   origin: "https://malvoria123.github.io ",
@@ -56,9 +56,7 @@ app.options("/api", (req, res) => {
 app.use(bodyParser.json());
 
 // Redis client setup
-const redisClient = redis.createClient({
-  url: process.env.REDIS_URL,
-});
+const redisClient = redis.createClient({ url: process.env.REDIS_URL });
 
 redisClient.on("error", (err) => {
   console.error("Redis Client Error:", err);
@@ -73,18 +71,20 @@ let limiter;
     console.log("Connected to Redis successfully.");
 
     limiter = rateLimit({
-      store: new RedisStore({ client: redisClient }),
-      windowMs: 15 * 60 * 1000, // 15 minutes
-      max: 5, // Limit each IP to 5 requests per window
+      store: RateLimitRedis({
+        sendCommand: (...args) => redisClient.sendCommand(args),
+      }),
+      windowMs: 15 * 60 * 1000,
+      max: 5,
       message: {
         status: 429,
         message: "Too many requests from this IP. Please try again later.",
       },
-      standardHeaders: true, // Enable modern RateLimit-* headers
-      legacyHeaders: false, // Disable deprecated X-RateLimit-* headers
+      standardHeaders: true,
+      legacyHeaders: false,
     });
 
-    app.use(limiter);
+    app.use(limiter); // ✅ Move this inside async after setup
   } catch (error) {
     console.error("Failed to initialize rate limiter:", error);
   }
