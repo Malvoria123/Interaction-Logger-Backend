@@ -33,7 +33,7 @@ const app = express();
 // In-Memory Rate Limiter
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1, // limit each IP to small requests per windowMs
+  max: 0, // limit each IP to small requests per windowMs
   message: {
     status: 429,
     message: "Too many requests from this IP. Please try again later.",
@@ -50,7 +50,7 @@ app.use((req, res, next) => {
   res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.header("Access-Control-Allow-Headers", "Content-Type, x-api-key");
   if (req.method === "OPTIONS") {
-    return res.status(200).end(); // Don't use sendStatus on Vercel/Railway
+    return res.status(200).end(); // Don't use sendStatus on Railway
   }
   next();
 });
