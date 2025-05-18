@@ -52,7 +52,7 @@ app.use(bodyParser.json());
 // In-Memory Rate Limiter
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1, // limit each IP to small requests per windowMs
+  max: 3, // limit each IP to small requests per windowMs
   message: {
     status: 429,
     message: "Too many requests from this IP. Please try again later.",
