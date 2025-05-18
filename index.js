@@ -32,14 +32,18 @@ const app = express();
 
 // In-Memory Rate Limiter
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 0, // limit each IP to small requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 1,
+  skip: () => false,
   message: {
     status: 429,
     message: "Too many requests from this IP. Please try again later.",
   },
   standardHeaders: true,
   legacyHeaders: false,
+  handler: (req, res, next, options) => {
+    res.status(options.statusCode).json(options.message);
+  }
 });
 
 app.use(limiter);
