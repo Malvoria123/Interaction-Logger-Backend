@@ -30,6 +30,20 @@ const app = express();
 //   return res.status(503).send("Server is under maintenance. Please try again later.");
 // });
 
+// In-Memory Rate Limiter
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 0, // limit each IP to small requests per windowMs
+  message: {
+    status: 429,
+    message: "Too many requests from this IP. Please try again later.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use(limiter);
+
 // CORS headers
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "https://malvoria123.github.io");
@@ -48,20 +62,6 @@ app.options("/api", (req, res) => {
 
 // Body parser middleware
 app.use(bodyParser.json());
-
-// In-Memory Rate Limiter
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 0, // limit each IP to small requests per windowMs
-  message: {
-    status: 429,
-    message: "Too many requests from this IP. Please try again later.",
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-app.use(limiter);
 
 // API POST Endpoint
 app.post("/api", async (req, res) => {
