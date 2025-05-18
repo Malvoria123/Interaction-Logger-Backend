@@ -24,8 +24,18 @@ const db = admin.firestore();
 // Express app setup
 const app = express();
 
+const corsOptions = {
+  origin: "https://malvoria123.github.io",
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "x-api-key"],
+};
+
+app.use(cors(corsOptions));
+
+// OPTIONAL: respond to preflight OPTIONS requests
+app.options("/api", cors(corsOptions));
+
 // Maintenance
-// Comment out when not needed
 // app.use((req, res, next) => {
 //   return res.status(503).send("Server is under maintenance. Please try again later.");
 // });
@@ -48,21 +58,21 @@ const limiter = rateLimit({
 
 app.use(limiter);
 
-// CORS headers
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "https://malvoria123.github.io");
-  res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type, x-api-key");
-  if (req.method === "OPTIONS") {
-    return res.status(200).end(); // Don't use sendStatus on Railway
-  }
-  next();
-});
+// // CORS headers
+// app.use((req, res, next) => {
+//   res.header("Access-Control-Allow-Origin", "https://malvoria123.github.io");
+//   res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+//   res.header("Access-Control-Allow-Headers", "Content-Type, x-api-key");
+//   if (req.method === "OPTIONS") {
+//     return res.status(200).end(); // Don't use sendStatus on Railway
+//   }
+//   next();
+// });
 
-// Handle preflight OPTIONS requests
-app.options("/api", (req, res) => {
-  res.sendStatus(200);
-});
+// // Handle preflight OPTIONS requests
+// app.options("/api", (req, res) => {
+//   res.sendStatus(200);
+// });
 
 // Body parser middleware
 app.use(bodyParser.json());
