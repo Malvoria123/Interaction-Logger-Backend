@@ -91,7 +91,7 @@ app.post("/api", async (req, res) => {
   }
 });
 
-// Simple GET Endpoint
+// GET Endpoint
 app.get("/api", (req, res) => {
   res.status(200).json({
     status: 200,
