@@ -43,7 +43,7 @@ app.options("/api", cors(corsOptions));
 // In-Memory Rate Limiter
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 3,
+  max: 4,
   skip: () => false,
   message: {
     status: 429,
