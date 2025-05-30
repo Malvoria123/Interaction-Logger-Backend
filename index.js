@@ -25,9 +25,9 @@ const db = admin.firestore();
 const app = express();
 
 // Maintenance
-app.use((req, res, next) => {
-  return res.status(503).send("Server is under maintenance. Please try again later.");
-});
+// app.use((req, res, next) => {
+//   return res.status(503).send("Server is under maintenance. Please try again later.");
+// });
 
 const corsOptions = {
   origin: "https://malvoria123.github.io",
@@ -43,7 +43,7 @@ app.options("/api", cors(corsOptions));
 // In-Memory Rate Limiter
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 1,
+  max: 3,
   skip: () => false,
   message: {
     status: 429,
